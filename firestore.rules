@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isEmailVerified() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'alkhalilservices1810@gmail.com'
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Helper for strict key checking in create
+    function hasRequiredKeys(data, keys) {
+      return data.keys().hasAll(keys) && data.keys().size() == keys.size();
+    }
+
+    // 1. Products
+    function isValidProduct(data) {
+      return data.nom is string && data.nom.size() > 0 && data.nom.size() <= 200 &&
+             data.prix is number && data.prix >= 0 &&
+             data.stock is number && data.stock >= -1000;
+    }
+
+    match /products/{productId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      allow update: if isAdmin() && isValidProduct(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 2. Clients
+    function isValidClient(data) {
+      return data.nom is string && data.nom.size() > 0 && data.nom.size() <= 100 &&
+             data.telephone is string && data.telephone.size() >= 8 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 200));
+    }
+
+    match /clients/{clientId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(clientId) && isValidClient(incoming()) && (
+        incoming().createdAt == request.time
+      );
+      allow update: if isSignedIn() && isValidClient(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 3. Sales
+    function isValidSale(data) {
+      return data.items is list && data.items.size() > 0 &&
+             data.total is number && data.total >= 0 &&
+             data.modePaiement in ['Espèces', 'Wave', 'Orange Money'];
+    }
+
+    match /sales/{saleId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(saleId) && isValidSale(incoming()) && (
+        incoming().date == request.time
+      );
+      allow update: if false; // Sales are immutable by default for integrity
+      allow delete: if isAdmin();
+    }
+
+    // 4. Expenses
+    function isValidExpense(data) {
+      return data.montant is number && data.montant > 0 &&
+             data.description is string && data.description.size() > 0;
+    }
+
+    match /expenses/{expenseId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(expenseId) && isValidExpense(incoming()) && (
+        incoming().date == request.time
+      );
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // 5. Settings
+    function isValidSettings(data) {
+      return data.name is string && data.name.size() > 0 &&
+             data.currency is string && data.currency.size() >= 2;
+    }
+
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidSettings(incoming());
+    }
+
+    // 6. Admins (System collection)
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && request.auth.uid == adminId;
+      allow write: if false; // Manually Managed/Seeded
+    }
+  }
+}

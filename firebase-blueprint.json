@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Store inventory products",
+      "type": "object",
+      "properties": {
+        "nom": { "type": "string", "description": "Product name" },
+        "prix": { "type": "number", "description": "Selling price" },
+        "prixAchat": { "type": "number", "description": "Purchase price for profit calculation" },
+        "stock": { "type": "number", "description": "Current stock level" },
+        "stockMin": { "type": "number", "description": "Minimum stock level for alerts" },
+        "categorie": { "type": "string", "description": "Product category" },
+        "image": { "type": "string", "description": "Image URL" },
+        "codeBarre": { "type": "string", "description": "Barcode value" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nom", "prix", "stock"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Store customers",
+      "type": "object",
+      "properties": {
+        "nom": { "type": "string", "description": "Client name" },
+        "telephone": { "type": "string", "description": "Phone number" },
+        "email": { "type": "string", "description": "Optional email" },
+        "pointsFidelite": { "type": "number", "description": "Loyalty points" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["nom", "telephone"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Recorded sales transactions",
+      "type": "object",
+      "properties": {
+        "items": { "type": "array", "description": "List of items sold" },
+        "total": { "type": "number", "description": "Total amount" },
+        "date": { "type": "string", "format": "date-time" },
+        "modePaiement": { "type": "string", "enum": ["Espèces", "Wave", "Orange Money"] },
+        "clientId": { "type": "string", "description": "Reference to client if any" },
+        "profit": { "type": "number", "description": "Total profit from this sale" }
+      },
+      "required": ["items", "total", "date", "modePaiement"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Store expenses",
+      "type": "object",
+      "properties": {
+        "montant": { "type": "number" },
+        "description": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "categorie": { "type": "string" }
+      },
+      "required": ["montant", "date", "description"]
+    },
+    "ShopSettings": {
+      "title": "Shop Settings",
+      "description": "Configurations for the shop",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "currency": { "type": "string" },
+        "logo": { "type": "string" }
+      },
+      "required": ["name", "phone", "address", "currency"]
+    },
+    "Admin": {
+      "title": "Admin User",
+      "description": "Authorized administrators",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "products": { "schema": "Product", "description": "Main product catalog" },
+    "clients": { "schema": "Client", "description": "Customer database" },
+    "sales": { "schema": "Sale", "description": "Sales history" },
+    "expenses": { "schema": "Expense", "description": "Expense history" },
+    "settings": { "schema": "ShopSettings", "description": "Global settings" },
+    "admins": { "schema": "Admin", "description": "Administrators list" }
+  }
+}

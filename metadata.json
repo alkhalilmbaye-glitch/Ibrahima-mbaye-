@@ -1,0 +1,8 @@
+{
+  "name": "Remix: AL KHALIL BUSSINES COMPAGNIE",
+  "description": "Application professionnelle de gestion de caisse et de stock pour boutique avec tableau de bord, gestion des clients, rapports et scanner de code-barres.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
